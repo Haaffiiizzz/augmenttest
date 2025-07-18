@@ -2,26 +2,31 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
-import pool from './db';
+import { query } from './db';
 
 export async function signUp(_prevState: any, formData: FormData) {
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
 
+  console.log('🔐 SignUp attempt for email:', email);
+
   try {
     const hashedPassword = await bcrypt.hash(password, 12);
-    
-    const result = await pool.query(
+
+    console.log('🔐 Attempting to insert user into database...');
+    const result = await query(
       'INSERT INTO app_users (email, password_hash) VALUES ($1, $2) RETURNING id, email',
       [email, hashedPassword]
     );
 
+    console.log('✅ User created successfully:', result.rows[0]);
     return { success: true, user: result.rows[0] };
   } catch (error: any) {
+    console.error('❌ SignUp error:', error);
     if (error.code === '23505') {
       return { error: 'Email already exists' };
     }
-    return { error: 'Failed to create account' };
+    return { error: 'Failed to create account: ' + error.message };
   }
 }
 
@@ -30,7 +35,7 @@ export async function signIn(_prevState: any, formData: FormData) {
   const password = formData.get('password') as string;
 
   try {
-    const result = await pool.query(
+    const result = await query(
       'SELECT id, email, password_hash FROM app_users WHERE email = $1',
       [email]
     );
@@ -48,7 +53,7 @@ export async function signIn(_prevState: any, formData: FormData) {
 
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!, { expiresIn: '7d' });
 
-    await pool.query(
+    await query(
       'INSERT INTO app_sessions (user_id, token, expires_at) VALUES ($1, $2, $3)',
       [user.id, token, new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)]
     );
@@ -81,7 +86,7 @@ export async function getCurrentUser() {
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: number };
 
     // Check if session exists and is valid
-    const sessionResult = await pool.query(
+    const sessionResult = await query(
       'SELECT user_id FROM app_sessions WHERE token = $1 AND expires_at > NOW()',
       [token]
     );
@@ -91,7 +96,7 @@ export async function getCurrentUser() {
     }
 
     // Get user details
-    const userResult = await pool.query(
+    const userResult = await query(
       'SELECT id, email FROM app_users WHERE id = $1',
       [decoded.userId]
     );
@@ -114,7 +119,7 @@ export async function signOut() {
 
     if (token) {
       // Remove session from database
-      await pool.query('DELETE FROM app_sessions WHERE token = $1', [token]);
+      await query('DELETE FROM app_sessions WHERE token = $1', [token]);
     }
 
     // Clear the auth cookie
