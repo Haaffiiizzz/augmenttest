@@ -18,7 +18,7 @@ export async function GET() {
       ORDER BY table_name
     `);
     
-    const existingTables = tablesResult.rows.map(row => row.table_name);
+    const existingTables = tablesResult.rows.map((row: any) => row.table_name);
     console.log('📋 Existing tables:', existingTables);
     
     // Test user count
