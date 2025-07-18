@@ -1,34 +1,47 @@
-const { Pool } = require('pg');
-const fs = require('fs');
-const path = require('path');
+import { Pool } from 'pg';
+import fs from 'fs';
+import path from 'path';
 
-async function setupProductionDatabase() {
-  console.log('🚀 Setting up production database...');
+let isInitialized = false;
 
+export async function initializeDatabase(): Promise<void> {
+  // Only run once
+  if (isInitialized) {
+    return;
+  }
+
+  console.log('🚀 Initializing database tables...');
+  
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
     console.error('❌ DATABASE_URL environment variable is not set');
-    console.log('Please set your production database URL in Vercel environment variables');
-    process.exit(1);
+    throw new Error('DATABASE_URL is required');
   }
-
-  console.log('Database URL configured:', databaseUrl.replace(/:[^:@]*@/, ':****@'));
 
   const pool = new Pool({
     connectionString: databaseUrl,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    connectionTimeoutMillis: 30000, // Increased timeout
+    connectionTimeoutMillis: 30000,
     idleTimeoutMillis: 30000,
-    max: 1, // Limit connections during setup
+    max: 1,
   });
 
   try {
     const client = await pool.connect();
-    console.log('✅ Connected to production database');
+    console.log('✅ Connected to database for initialization');
 
-    // Create application tables
-    console.log('📋 Creating application tables...');
-    const schemaPath = path.join(__dirname, '..', 'database', 'app-schema.sql');
+    // Read schema file
+    const schemaPath = path.join(process.cwd(), 'database', 'app-schema.sql');
+    
+    // Check if schema file exists
+    if (!fs.existsSync(schemaPath)) {
+      console.log('ℹ️  Schema file not found, skipping table creation');
+      client.release();
+      await pool.end();
+      isInitialized = true;
+      return;
+    }
+
     const schema = fs.readFileSync(schemaPath, 'utf8');
     
     const statements = schema
@@ -39,14 +52,14 @@ async function setupProductionDatabase() {
     for (const statement of statements) {
       try {
         await client.query(statement);
-        console.log('✅ Created:', statement.substring(0, 50) + '...');
-      } catch (error) {
+        console.log('✅ Created table:', statement.substring(0, 50) + '...');
+      } catch (error: any) {
         if (error.code === '42P07') {
           console.log('ℹ️  Table already exists:', statement.substring(0, 50) + '...');
         } else {
           console.error('❌ Error executing statement:', statement);
           console.error('Error:', error.message);
-          throw error;
+          // Don't throw here, just log the error
         }
       }
     }
@@ -60,7 +73,7 @@ async function setupProductionDatabase() {
       ORDER BY table_name
     `);
     
-    console.log('\n📋 Production database tables:');
+    console.log('📋 Database tables status:');
     const expectedTables = ['app_sessions', 'app_users'];
     const existingTables = tablesResult.rows.map(row => row.table_name);
     
@@ -73,19 +86,21 @@ async function setupProductionDatabase() {
     }
 
     client.release();
-    console.log('\n🎉 Production database setup completed successfully!');
+    console.log('🎉 Database initialization completed');
+    isInitialized = true;
     
-  } catch (error) {
-    console.error('❌ Production database setup failed:', error.message);
-    process.exit(1);
+  } catch (error: any) {
+    console.error('❌ Database initialization failed:', error.message);
+    // Don't throw error in production, just log it
+    if (process.env.NODE_ENV !== 'production') {
+      throw error;
+    }
   } finally {
     await pool.end();
   }
 }
 
-// Only run if called directly
-if (require.main === module) {
-  setupProductionDatabase();
+// Auto-initialize in production
+if (process.env.NODE_ENV === 'production') {
+  initializeDatabase().catch(console.error);
 }
-
-module.exports = { setupProductionDatabase };

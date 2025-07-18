@@ -1,4 +1,5 @@
 import { Pool, PoolConfig } from 'pg';
+import { initializeDatabase } from './db-init';
 
 // Database configuration
 const config: PoolConfig = {
@@ -7,7 +8,7 @@ const config: PoolConfig = {
   // Connection pool settings
   max: 20, // Maximum number of clients in the pool
   idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
-  connectionTimeoutMillis: 2000, // Return an error after 2 seconds if connection could not be established
+  connectionTimeoutMillis: 10000, // Increased timeout for production
   maxUses: 7500, // Close (and replace) a connection after it has been used 7500 times
 };
 
@@ -19,6 +20,28 @@ pool.on('error', (err) => {
   console.error('Unexpected error on idle client', err);
   process.exit(-1);
 });
+
+// Initialize database tables on first connection
+let initPromise: Promise<void> | null = null;
+
+async function ensureInitialized(): Promise<void> {
+  if (!initPromise) {
+    initPromise = initializeDatabase();
+  }
+  await initPromise;
+}
+
+// Enhanced query function that ensures database is initialized
+export async function query(text: string, params?: any[]): Promise<any> {
+  await ensureInitialized();
+  return pool.query(text, params);
+}
+
+// Get a client from the pool (with initialization)
+export async function getClient() {
+  await ensureInitialized();
+  return pool.connect();
+}
 
 // Test connection function
 export async function testConnection() {

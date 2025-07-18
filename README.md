@@ -85,7 +85,12 @@ A full-stack authentication application built with Next.js, TypeScript, PostgreS
    ```
 
 4. **Database Setup**
-   The database tables will be automatically created during the build process.
+   The database tables will be automatically created when your application first starts.
+
+   If you need to manually set up the database, you can run:
+   ```bash
+   npm run db:setup
+   ```
 
 ## 🗄️ Database Schema
 

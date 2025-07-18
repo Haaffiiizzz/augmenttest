@@ -1,7 +1,7 @@
 {
   "version": 4,
   "routes": {
-    "/": {
+    "/auth/signin": {
       "experimentalBypassFor": [
         {
           "type": "header",
@@ -14,8 +14,8 @@
         }
       ],
       "initialRevalidateSeconds": false,
-      "srcRoute": "/",
-      "dataRoute": "/index.rsc",
+      "srcRoute": "/auth/signin",
+      "dataRoute": "/auth/signin.rsc",
       "allowHeader": [
         "host",
         "x-matched-path",
@@ -49,7 +49,7 @@
         "x-next-revalidate-tag-token"
       ]
     },
-    "/auth/signin": {
+    "/": {
       "experimentalBypassFor": [
         {
           "type": "header",
@@ -62,8 +62,8 @@
         }
       ],
       "initialRevalidateSeconds": false,
-      "srcRoute": "/auth/signin",
-      "dataRoute": "/auth/signin.rsc",
+      "srcRoute": "/",
+      "dataRoute": "/index.rsc",
       "allowHeader": [
         "host",
         "x-matched-path",

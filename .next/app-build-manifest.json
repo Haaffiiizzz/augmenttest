@@ -22,14 +22,6 @@
       "static/chunks/main-app-83d4f27dc8e10267.js",
       "static/chunks/app/api/auth/me/route-a12c0c0d215cb2dd.js"
     ],
-    "/auth/signup/page": [
-      "static/chunks/webpack-1215c1c2c08f00fc.js",
-      "static/chunks/4bd1b696-cf72ae8a39fa05aa.js",
-      "static/chunks/964-eda38e26c0391a47.js",
-      "static/chunks/main-app-83d4f27dc8e10267.js",
-      "static/chunks/874-437a265a67d6cfee.js",
-      "static/chunks/app/auth/signup/page-56fc08b0c99eac32.js"
-    ],
     "/auth/signin/page": [
       "static/chunks/webpack-1215c1c2c08f00fc.js",
       "static/chunks/4bd1b696-cf72ae8a39fa05aa.js",
@@ -37,6 +29,14 @@
       "static/chunks/main-app-83d4f27dc8e10267.js",
       "static/chunks/874-437a265a67d6cfee.js",
       "static/chunks/app/auth/signin/page-4c5d971b3654895c.js"
+    ],
+    "/auth/signup/page": [
+      "static/chunks/webpack-1215c1c2c08f00fc.js",
+      "static/chunks/4bd1b696-cf72ae8a39fa05aa.js",
+      "static/chunks/964-eda38e26c0391a47.js",
+      "static/chunks/main-app-83d4f27dc8e10267.js",
+      "static/chunks/874-437a265a67d6cfee.js",
+      "static/chunks/app/auth/signup/page-56fc08b0c99eac32.js"
     ],
     "/page": [
       "static/chunks/webpack-1215c1c2c08f00fc.js",
